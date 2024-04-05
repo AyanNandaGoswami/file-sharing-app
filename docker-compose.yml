@@ -1,0 +1,116 @@
+version: '3'
+services:
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "3005:80"
+    restart: always
+    networks:
+      - rabbitmq_net
+
+  user_management_service:
+    build:
+      context: ./user_management
+      dockerfile: Dockerfile
+    container_name: "user-management"
+    ports:
+      - '8080:8080'
+    command: 
+      - go
+      - run
+      - /app/user_management/cmd/server/main.go
+    depends_on:
+      - mongo_database_user_management
+      - rabbitmq
+    networks:
+      - rabbitmq_net
+
+  post_management_service:
+    build:
+      context: ./post_management
+      dockerfile: Dockerfile
+    container_name: "post-management"
+    ports:
+      - '8081:8081'
+    command:
+      - go
+      - run
+      - /app/post_management/cmd/server/main.go
+    depends_on:
+      - mongo_database_user_management
+      - rabbitmq
+    networks:
+      - rabbitmq_net
+
+  social_media_management_service:
+    build:
+      context: ./social_media_management
+      dockerfile: Dockerfile
+    container_name: "social-media-management"
+    command:
+      - sh
+      - -c
+      - |
+        python manage.py migrate  # Run migrations
+        python manage.py runserver 0.0.0.0:8000  # Start the server
+    ports:
+      - '4000:8000'
+    depends_on:
+      - mysql_database_social_media_management
+      - rabbitmq
+    networks:
+      - rabbitmq_net
+
+  mongo_database_user_management:
+    image: mongo:latest
+    restart: always
+    container_name: "mongo_user_management"
+    ports:
+      - "27020:27017"
+    volumes:
+      - mongo_data_user_management:/data/db
+    networks:
+      - rabbitmq_net
+
+  mysql_database_social_media_management:
+    image: mysql:latest
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      DB_NAME: 'post_management_app_db'
+      DB_USER: 'root'
+      DB_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+      DB_PORT: 3306
+      DB_HOST: mysql_database_social_media_management
+      DB_PATH: mysql_database_social_media_management:3306
+    volumes:
+      - mysql_data_social_media_management:/var/lib/mysql
+    networks:
+      - rabbitmq_net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - rabbitmq_net
+
+volumes:
+  mongo_data_user_management:
+  mysql_data_social_media_management:
+
+networks:
+  rabbitmq_net:
+    driver: bridge
+
+
+
