@@ -11,5 +11,9 @@ func InitializeRoutes() {
 	http.HandleFunc("/auth/v1/register/", handlers.RegisterNewUser)
 	http.HandleFunc("/auth/v1/login/", handlers.Login)
 
-	http.Handle("/auth/v1/user-detail", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.UserDetail)))
+	// Require authentication for the following endpoints
+	http.Handle("/auth/v1/userinfo", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.UserDetail)))
+	http.Handle("/auth/v1/logout/", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.Logout)))
+	http.Handle("/auth/v1/update/userinfo/", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.UpdateUserInfo)))
+	http.Handle("/auth/v1/account/delete/", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.DeleteUser)))
 }

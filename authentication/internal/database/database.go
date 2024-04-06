@@ -13,7 +13,7 @@ import (
 var MyClient *mongo.Client
 var DB *mongo.Database
 var databaseName = "auth_service_database"
-var databaseCollections = []string{"users"}
+var databaseCollections = []string{"users", "blacklistedtokens"}
 
 func createDdatabaseCollections(ctx context.Context) {
 	for _, collectionName := range databaseCollections {

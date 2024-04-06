@@ -44,6 +44,61 @@ func RegisterNewUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(models.APIResponse{Message: "Account created successfully.", ExtraData: nil})
 }
 
+func UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
+	// Check if request method is PUT
+	if r.Method != "PUT" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Decode the user payload from the request body
+	var user models.UserUpdate
+	json.NewDecoder(r.Body).Decode(&user)
+
+	// Validate user registration payload
+	validation_err := user.ValidateUserUpdatePayload()
+
+	if validation_err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(validation_err)
+		return
+	}
+
+	userId := r.Context().Value("userId").(string)
+
+	if err := user.UpdateUserByID(userId); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error()})
+		return
+	}
+
+	// Return successful response
+	json.NewEncoder(w).Encode(models.APIResponse{Message: "User details updated successfully.", ExtraData: nil})
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	// Check if request method is DELETE
+	if r.Method != "DELETE" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userId := r.Context().Value("userId").(string)
+
+	err := models.DeleteUser(userId)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error(), ExtraData: nil})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+	json.NewEncoder(w).Encode(models.APIResponse{Message: "Successfully deleted the user."})
+}
+
 func Login(w http.ResponseWriter, r *http.Request) {
 	// Check if request method is POST
 	if r.Method != "POST" {
@@ -79,6 +134,23 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func Logout(w http.ResponseWriter, r *http.Request) {
+	// Check if request method is POST
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to json
+	w.Header().Set("Content-Type", "application/json")
+
+	token := r.Context().Value("token").(string)
+
+	models.NewBlacklistedToken(token)
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func UserDetail(w http.ResponseWriter, r *http.Request) {
 	// Check if request method is GET
 	if r.Method != "GET" {
@@ -97,12 +169,3 @@ func UserDetail(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(user)
 	}
 }
-
-// func ValidateAccesssToken(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	_, claims, _ := jwtauth.FromContext(r.Context())
-// 	userId, _ := claims["user_id"].(string)
-
-// 	json.NewEncoder(w).Encode(map[string]string{"user_id": userId})
-
-// }

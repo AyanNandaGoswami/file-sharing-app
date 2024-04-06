@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/auth"
+	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/models"
 )
 
 func returnErrorMessage(w http.ResponseWriter, errMessage string) {
@@ -38,6 +39,12 @@ func AuthValidateMiddleware(next http.Handler) http.Handler {
 		// Extract the token from the Authorization header
 		token := splitedInfo[1]
 
+		// Validate token is blacklisted or not
+		if models.IsTokenBlacklisted(token) {
+			returnErrorMessage(w, "Token is not alive. Please login again.")
+			return
+		}
+
 		// Retrieve user ID from JWT token
 		userId, err := auth.RetrieveUserIdFromJWTToken(token)
 		if err != nil {
@@ -51,6 +58,7 @@ func AuthValidateMiddleware(next http.Handler) http.Handler {
 
 		// Add user id to request context if needed
 		r = r.WithContext(context.WithValue(r.Context(), "userId", userId))
+		r = r.WithContext(context.WithValue(r.Context(), "token", token))
 
 		// Call the next handler
 		next.ServeHTTP(w, r)
