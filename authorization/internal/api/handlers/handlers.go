@@ -40,3 +40,32 @@ func RegisterNewService(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(models.APIResponse{Message: "Successfully registered new service."})
 
 }
+
+
+
+func RegisterNewPermission(w http.ResponseWriter, r *http.Request) {
+	// Check if request method is POST
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to json
+	w.Header().Set("Content-Type", "application/json")
+
+	var permission models.Permission
+
+	json.NewDecoder(r.Body).Decode(&permission)
+
+	err := permission.CreatePermission()
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(models.APIResponse{Message: "Successfully added new permission."})
+
+}
