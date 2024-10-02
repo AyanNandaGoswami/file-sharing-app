@@ -36,11 +36,12 @@ type CreateUser struct {
 }
 
 type UserDetail struct {
-	Firstname  string `json:"firstname"`
-	Lastname   string `json:"lastname"`
-	Middlename string `json:"middlename"`
-	Email      string `json:"email"`
-	UUID       string `json:"uuid"`
+	ID         primitive.ObjectID `bson:"_id,omitempty"`
+	Firstname  string             `json:"firstname"`
+	Lastname   string             `json:"lastname"`
+	Middlename string             `json:"middlename"`
+	Email      string             `json:"email"`
+	UUID       string             `json:"uuid"`
 }
 
 type UserUpdate struct {
