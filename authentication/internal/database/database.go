@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -15,23 +16,47 @@ var DB *mongo.Database
 var databaseName = "auth_service_database"
 var databaseCollections = []string{"users", "blacklistedtokens"}
 
-func createDdatabaseCollections(ctx context.Context) {
+func createDatabaseCollections(ctx context.Context) {
+	// List all collections in the database once
+	cursor, err := DB.ListCollections(ctx, bson.M{})
+	if err != nil {
+		log.Fatalf("Failed to list collections: %v", err)
+	}
+	defer cursor.Close(ctx)
+
+	// Create a map to store existing collection names
+	existingCollections := make(map[string]bool)
+
+	// Populate the map with the collection names
+	for cursor.Next(ctx) {
+		var collection struct {
+			Name string `bson:"name"`
+		}
+		if err := cursor.Decode(&collection); err != nil {
+			log.Fatalf("Error decoding collection name: %v", err)
+		}
+		existingCollections[collection.Name] = true
+	}
+
+	// Now check if each collection from the list should be created
 	for _, collectionName := range databaseCollections {
-		err := DB.CreateCollection(ctx, collectionName)
-		if err != nil {
-			log.Fatalf("[error] getting error during creation for collection => %s. [errorDetail] %s", collectionName, err.Error())
+		if _, exists := existingCollections[collectionName]; !exists {
+			// If collection doesn't exist, create it
+			if err := DB.CreateCollection(ctx, collectionName); err != nil {
+				log.Fatalf("Error creating collection %s: %v", collectionName, err)
+			}
 		}
 	}
 }
 
 func createOrRetrieveDatabase(ctx context.Context) {
 	DB = MyClient.Database(databaseName)
-	createDdatabaseCollections(ctx)
+	createDatabaseCollections(ctx)
 }
 
 func init() {
 	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://root:root@localhost:27020")
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27020")
 
 	// Create a context with a timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

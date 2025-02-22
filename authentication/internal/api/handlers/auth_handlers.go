@@ -5,7 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/auth"
+	middlewares "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/middlewares"
+	common_models "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/models"
+	auth "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/utilities"
+
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/models"
 )
 
@@ -36,12 +39,12 @@ func RegisterNewUser(w http.ResponseWriter, r *http.Request) {
 	// Create new user
 	if user.CreateNewUser() != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(models.FielValidationErrorResponse{Message: "Account does not created, contact to website admin."})
+		json.NewEncoder(w).Encode(common_models.FielValidationErrorResponse{Message: "Account does not created, contact to website admin."})
 		return
 	}
 
 	// Return successful response
-	json.NewEncoder(w).Encode(models.APIResponse{Message: "Account created successfully.", ExtraData: nil})
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Account created successfully.", ExtraData: nil})
 }
 
 func UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
@@ -71,12 +74,12 @@ func UpdateUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	if err := user.UpdateUserByID(userId); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error()})
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
 		return
 	}
 
 	// Return successful response
-	json.NewEncoder(w).Encode(models.APIResponse{Message: "User details updated successfully.", ExtraData: nil})
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "User details updated successfully.", ExtraData: nil})
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -92,11 +95,11 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error(), ExtraData: nil})
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error(), ExtraData: nil})
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-	json.NewEncoder(w).Encode(models.APIResponse{Message: "Successfully deleted the user."})
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Successfully deleted the user."})
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -118,17 +121,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userId, err := login.Authenticate(); err != nil {
+	if userId, primitiveUserId, err := login.Authenticate(); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(models.APIResponse{Message: "Invalid authentication credentials."})
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Invalid authentication credentials."})
 		return
 	} else {
-		token, err := auth.GenerateNewJWToken(userId)
+		token, err := auth.GenerateNewJWToken(userId, primitiveUserId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(models.APIResponse{Message: "Something went wrong!"})
+			json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Something went wrong!"})
 		} else {
-			json.NewEncoder(w).Encode(models.APIResponse{Message: "Logged in successfully.",
+			json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Logged in successfully.",
 				ExtraData: map[string]string{"access_token": token}})
 		}
 	}
@@ -160,7 +163,7 @@ func UserDetail(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	userId := r.Context().Value("userId").(string)
+	userId := r.Context().Value(middlewares.UserIdKey).(string)
 
 	user, err := models.GetUserByUUID(userId)
 	if err != nil {

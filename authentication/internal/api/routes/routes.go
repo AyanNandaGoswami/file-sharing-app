@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
+	middlewares "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/middlewares"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/api/handlers"
-	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/api/middlewares"
 )
 
 func InitializeRoutes() {
