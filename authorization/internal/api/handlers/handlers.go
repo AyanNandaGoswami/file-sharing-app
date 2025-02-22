@@ -6,8 +6,61 @@ import (
 	"net/http"
 	"regexp"
 
+	common_models "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/models"
+
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/models"
 )
+
+func RegisterNewAPIEndpoint(w http.ResponseWriter, r *http.Request) {
+	// Check if request method is POST
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to json
+	w.Header().Set("Content-Type", "application/json")
+
+	var api_endpoints models.APIEndpoints
+	json.NewDecoder(r.Body).Decode(&api_endpoints)
+
+	if validatonErr := api_endpoints.ValidateAPIEndpointsRegistrationPayload(); validatonErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(validatonErr)
+		return
+	}
+
+	if err := api_endpoints.RegisterNewAPIEndpoint(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Successfully added the endpoint."})
+
+}
+
+func GetAllEndpoints(w http.ResponseWriter, r *http.Request) {
+	// Check if request method is POST
+	if r.Method != "GET" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to json
+	w.Header().Set("Content-Type", "application/json")
+
+	endpoinds, err := models.AllAPIEndpoints()
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(endpoinds)
+}
 
 func RegisterNewPermission(w http.ResponseWriter, r *http.Request) {
 	// Check if request method is POST
@@ -33,12 +86,12 @@ func RegisterNewPermission(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error()})
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(models.APIResponse{Message: "Successfully added new permission."})
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Successfully added new permission."})
 
 }
 
@@ -61,7 +114,7 @@ func GetAllPermission(w http.ResponseWriter, r *http.Request) {
 		matched, err := regexp.MatchString(pattern, isActive)
 		if err != nil || !matched {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(models.APIResponse{Message: "isActive value is invalid."})
+			json.NewEncoder(w).Encode(common_models.APIResponse{Message: "isActive value is invalid."})
 			return
 		}
 
@@ -77,7 +130,7 @@ func GetAllPermission(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error()})
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -94,7 +147,7 @@ func SetUserPermission(w http.ResponseWriter, r *http.Request) {
 	// Set the content type to json
 	w.Header().Set("Content-Type", "application/json")
 
-	var userPermission models.CreateUserPermission
+	var userPermission models.UserPermission
 
 	json.NewDecoder(r.Body).Decode(&userPermission)
 
@@ -108,9 +161,9 @@ func SetUserPermission(w http.ResponseWriter, r *http.Request) {
 	err := userPermission.SetPermission()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.APIResponse{Message: err.Error()})
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(models.APIResponse{Message: "User permission has been updated successfully."})
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "User permission has been updated successfully."})
 }

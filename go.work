@@ -1,7 +1,7 @@
-go 1.22.1
+go 1.24.0
 
 use (
-    ./authentication/
-    ./authorization/
-    ./nexus/
+	./authentication/
+	./authorization/
+	./nexus/
 )

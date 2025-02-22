@@ -3,7 +3,9 @@ package models
 import (
 	"context"
 	"fmt"
+	"log"
 
+	common_models "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/models"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/database"
 	"github.com/go-playground/validator/v10"
 
@@ -21,53 +23,39 @@ func init() {
 }
 
 type UserPermission struct {
-	ID              primitive.ObjectID `bson:"_id,omitempty"`
-	User            primitive.ObjectID `json:"user" validate:"required=This field is required."`
-	PermissionNames []string           `json:"permissionnames" validate:"required=This field is required."`
+	ID          primitive.ObjectID   `bson:"_id,omitempty"`
+	User        primitive.ObjectID   `json:"user" validate:"required=This field is required."`
+	Permissions []primitive.ObjectID `json:"permissions" validate:"required=This field is required."`
 }
 
-type PermissionWithAction struct {
-	Action       string             `json:"action" validate:"required=This field is required."`
-	PermissionId primitive.ObjectID `json:"permissionid" validate:"required=This field is required."`
-}
-
-type CreateUserPermission struct {
-	ID              primitive.ObjectID     `bson:"_id,omitempty"`
-	User            primitive.ObjectID     `json:"user" validate:"required=This field is required."`
-	PermissionData  []PermissionWithAction `json:"permissionwithaction" validate:"required=This field is required."`
-	PermissionNames []string               `json:"permissionnames"`
-}
-
-func (up *CreateUserPermission) ValidateUserPermissionRegistrationPayload() []FieldValidationErrorResponse {
+func (userPermission *UserPermission) ValidateUserPermissionRegistrationPayload() []common_models.FielValidationErrorResponse {
 	validate := validator.New()
-	err := validate.Struct(up)
-	var res []FieldValidationErrorResponse
+	err := validate.Struct(userPermission)
+	var res []common_models.FielValidationErrorResponse
 
 	if err != nil {
 
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 
 	// check permissions are valid
-	for _, permissionItem := range up.PermissionData {
-		permissionObj, validPermission := GetPermissionByID(permissionItem.PermissionId, true)
+	for _, permissionId := range userPermission.Permissions {
+		validPermission := GetPermissionByID(permissionId, true)
 
-		if !validPermission {
-			res = append(res, FieldValidationErrorResponse{
-				FieldName: "PermissionId", Message: fmt.Sprintf("Permission (%s) is inactive or invalid.", permissionItem.PermissionId)})
-		} else {
-			up.PermissionNames = append(up.PermissionNames, permissionObj.Name)
+		if validPermission == nil {
+			res = append(res, common_models.FielValidationErrorResponse{
+				FieldName: "PermissionId", Message: fmt.Sprintf("Permission (%s) is inactive or invalid.", permissionId)})
 		}
 	}
 
 	return res
 }
 
-func (up *CreateUserPermission) SetPermission() error {
+func (uPermission *UserPermission) SetPermission() error {
 
-	query := bson.M{"user": up.User}
+	query := bson.M{"user": uPermission.User}
 	var userPermission UserPermission
 
 	err := userPermissionCollection.FindOne(context.Background(), query).Decode(&userPermission)
@@ -75,8 +63,8 @@ func (up *CreateUserPermission) SetPermission() error {
 		if err == mongo.ErrNoDocuments {
 			// If no document is found, insert a new one
 			userPermission = UserPermission{
-				User:            up.User,
-				PermissionNames: up.PermissionNames,
+				User:        uPermission.User,
+				Permissions: uPermission.Permissions,
 			}
 			_, err := userPermissionCollection.InsertOne(context.Background(), userPermission)
 			if err != nil {
@@ -88,7 +76,7 @@ func (up *CreateUserPermission) SetPermission() error {
 		}
 	} else {
 		// If a document is found, update it
-		update := bson.M{"PermissionNames": up.PermissionNames}
+		update := bson.M{"Permissions": uPermission.Permissions}
 
 		_, err := userPermissionCollection.UpdateOne(context.Background(), query, bson.M{"$set": update})
 		if err != nil {
@@ -97,4 +85,27 @@ func (up *CreateUserPermission) SetPermission() error {
 	}
 
 	return nil
+}
+
+func GetUserPermissions(userId string) (map[string]string, error) {
+	objectId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		log.Fatal("Error converting string to ObjectID:", err)
+	}
+	query := bson.M{"user": objectId}
+	var userPermission UserPermission
+
+	err = userPermissionCollection.FindOne(context.Background(), query).Decode(&userPermission)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("Permission is not set for the requested user")
+		} else {
+			return nil, fmt.Errorf("error fetching user permissions: %v", err)
+		}
+	}
+
+	// fetch the APIEndpoints for the permissions
+	apiEndpoints, err := GetAPIEndpointsFromPermissions(userPermission.Permissions)
+	return apiEndpoints, err
+
 }
