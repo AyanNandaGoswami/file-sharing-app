@@ -28,15 +28,35 @@ type UserPermission struct {
 	Permissions []primitive.ObjectID `json:"permissions" validate:"required=This field is required."`
 }
 
-func (userPermission *UserPermission) ValidateUserPermissionRegistrationPayload() []common_models.FielValidationErrorResponse {
+// Define a struct for the request body to hold the primitiveUserId
+type GetUserPermissionsRequest struct {
+	PrimitiveUserId string `json:"primitiveUserId" validate:"required=This field is required."`
+}
+
+func (up *GetUserPermissionsRequest) ValidateGetUserPermissionsRequestRegistrationPayload() []common_models.FieldValidationErrorResponse {
 	validate := validator.New()
-	err := validate.Struct(userPermission)
-	var res []common_models.FielValidationErrorResponse
+	err := validate.Struct(up)
+	var res []common_models.FieldValidationErrorResponse
 
 	if err != nil {
 
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+		}
+	}
+
+	return res
+}
+
+func (userPermission *UserPermission) ValidateUserPermissionRegistrationPayload() []common_models.FieldValidationErrorResponse {
+	validate := validator.New()
+	err := validate.Struct(userPermission)
+	var res []common_models.FieldValidationErrorResponse
+
+	if err != nil {
+
+		for _, err := range err.(validator.ValidationErrors) {
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 
@@ -45,7 +65,7 @@ func (userPermission *UserPermission) ValidateUserPermissionRegistrationPayload(
 		validPermission := GetPermissionByID(permissionId, true)
 
 		if validPermission == nil {
-			res = append(res, common_models.FielValidationErrorResponse{
+			res = append(res, common_models.FieldValidationErrorResponse{
 				FieldName: "PermissionId", Message: fmt.Sprintf("Permission (%s) is inactive or invalid.", permissionId)})
 		}
 	}
@@ -76,7 +96,7 @@ func (uPermission *UserPermission) SetPermission() error {
 		}
 	} else {
 		// If a document is found, update it
-		update := bson.M{"Permissions": uPermission.Permissions}
+		update := bson.M{"permissions": uPermission.Permissions}
 
 		_, err := userPermissionCollection.UpdateOne(context.Background(), query, bson.M{"$set": update})
 		if err != nil {

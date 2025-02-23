@@ -63,15 +63,15 @@ func init() {
 }
 
 // user registration
-func (u *CreateUser) ValidateUserRegistrationPayload() []common_models.FielValidationErrorResponse {
+func (u *CreateUser) ValidateUserRegistrationPayload() []common_models.FieldValidationErrorResponse {
 	validate := validator.New()
 	err := validate.Struct(u)
-	var res []common_models.FielValidationErrorResponse
+	var res []common_models.FieldValidationErrorResponse
 
 	if err != nil {
 
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 
@@ -80,21 +80,21 @@ func (u *CreateUser) ValidateUserRegistrationPayload() []common_models.FielValid
 	query := bson.M{"email": u.Email}
 
 	if err := userCollection.FindOne(context.Background(), query).Decode(&result); err == nil {
-		res = append(res, common_models.FielValidationErrorResponse{FieldName: "email", Message: "This email already taken."})
+		res = append(res, common_models.FieldValidationErrorResponse{FieldName: "email", Message: "This email already taken."})
 	}
 
 	return res
 }
 
-func (u *UserUpdate) ValidateUserUpdatePayload() []common_models.FielValidationErrorResponse {
+func (u *UserUpdate) ValidateUserUpdatePayload() []common_models.FieldValidationErrorResponse {
 	validate := validator.New()
 	err := validate.Struct(u)
-	var res []common_models.FielValidationErrorResponse
+	var res []common_models.FieldValidationErrorResponse
 
 	if err != nil {
 
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 
@@ -103,7 +103,7 @@ func (u *UserUpdate) ValidateUserUpdatePayload() []common_models.FielValidationE
 	query := bson.M{"email": u.Email}
 
 	if err := userCollection.FindOne(context.Background(), query).Decode(&result); err == nil {
-		res = append(res, common_models.FielValidationErrorResponse{FieldName: "email", Message: "This email already taken."})
+		res = append(res, common_models.FieldValidationErrorResponse{FieldName: "email", Message: "This email already taken."})
 	}
 
 	return res
@@ -170,15 +170,15 @@ func DeleteUser(uuid string) error {
 }
 
 // login
-func (l *Login) ValiadteLoginPayload() []common_models.FielValidationErrorResponse {
+func (l *Login) ValiadteLoginPayload() []common_models.FieldValidationErrorResponse {
 	validate := validator.New()
 	err := validate.Struct(l)
-	var res []common_models.FielValidationErrorResponse
+	var res []common_models.FieldValidationErrorResponse
 
 	if err != nil {
 
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 

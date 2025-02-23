@@ -1,5 +1,5 @@
-github.com/AyanNandaGoswami/file-sharing-app-common-utilities v0.0.2 h1:osEKrDr/D/adRitO1udM8Jt9Rjx6+6L5rPiaxUE+qQU=
-github.com/AyanNandaGoswami/file-sharing-app-common-utilities v0.0.2/go.mod h1:Y2ARD/WqKrVlXAXAKSUCmb7rTW//f3Z15ZEgkc3fbns=
+github.com/AyanNandaGoswami/file-sharing-app-common-utilities v0.0.3 h1:0a24arV6wHU/8UkJr/7Lvq5ZOq2OIflTjRAD/y9eNaA=
+github.com/AyanNandaGoswami/file-sharing-app-common-utilities v0.0.3/go.mod h1:Y2ARD/WqKrVlXAXAKSUCmb7rTW//f3Z15ZEgkc3fbns=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=

@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"regexp"
 
 	common_models "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/models"
 
+	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/api/middlewares"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/models"
 )
 
@@ -157,7 +157,6 @@ func SetUserPermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(userPermission)
 	err := userPermission.SetPermission()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -166,4 +165,35 @@ func SetUserPermission(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "User permission has been updated successfully."})
+}
+
+func GetUserPermissionEndpoints(w http.ResponseWriter, r *http.Request) {
+	// Check if the request method is POST
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	var requestData models.GetUserPermissionsRequest
+	json.NewDecoder(r.Body).Decode(&requestData)
+	if validationErrors := requestData.ValidateGetUserPermissionsRequestRegistrationPayload(); validationErrors != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(validationErrors)
+		return
+	}
+
+	// Call the method to get user permissions
+	var permissionGetter middlewares.PermissionGetterImplementation
+	apiEndpoints, err := permissionGetter.GetUserPermissionEndpoints(requestData.PrimitiveUserId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error(), ExtraData: nil})
+		return
+	}
+
+	// Send the response with the permission data
+	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Ok", ExtraData: apiEndpoints})
 }

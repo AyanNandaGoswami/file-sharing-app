@@ -53,14 +53,14 @@ type PermissionList struct {
 }
 
 // APIEndpoints
-func (apis *APIEndpoints) ValidateAPIEndpointsRegistrationPayload() []common_models.FielValidationErrorResponse {
+func (apis *APIEndpoints) ValidateAPIEndpointsRegistrationPayload() []common_models.FieldValidationErrorResponse {
 	validate := validator.New()
 	err := validate.Struct(apis)
-	var res []common_models.FielValidationErrorResponse
+	var res []common_models.FieldValidationErrorResponse
 
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 
@@ -72,7 +72,7 @@ func (apis *APIEndpoints) ValidateAPIEndpointsRegistrationPayload() []common_mod
 	collection := getCollection(apiEndpointCollection)
 
 	if err := collection.FindOne(context.Background(), query).Decode(&result); err == nil {
-		res = append(res, common_models.FielValidationErrorResponse{
+		res = append(res, common_models.FieldValidationErrorResponse{
 			FieldName: "url", Message: fmt.Sprintf("API endpoint %s is already registered with the same method %s", apis.URL, apis.Method)})
 	}
 
@@ -118,15 +118,15 @@ func AllAPIEndpoints() ([]APIEndpoints, error) {
 }
 
 // Permissions
-func (p *Permission) ValidatePermissionRegistrationPayload() []common_models.FielValidationErrorResponse {
+func (p *Permission) ValidatePermissionRegistrationPayload() []common_models.FieldValidationErrorResponse {
 	validate := validator.New()
 	err := validate.Struct(p)
-	var res []common_models.FielValidationErrorResponse
+	var res []common_models.FieldValidationErrorResponse
 
 	if err != nil {
 
 		for _, err := range err.(validator.ValidationErrors) {
-			res = append(res, common_models.FielValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
+			res = append(res, common_models.FieldValidationErrorResponse{FieldName: err.StructField(), Message: err.Param()})
 		}
 	}
 
@@ -138,7 +138,7 @@ func (p *Permission) ValidatePermissionRegistrationPayload() []common_models.Fie
 	collection := getCollection(permissionCollection)
 
 	if err := collection.FindOne(context.Background(), query).Decode(&result); err == nil {
-		res = append(res, common_models.FielValidationErrorResponse{FieldName: "name", Message: "This permission is already registered."})
+		res = append(res, common_models.FieldValidationErrorResponse{FieldName: "name", Message: "This permission is already registered."})
 	}
 
 	return res

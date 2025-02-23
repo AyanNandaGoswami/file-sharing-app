@@ -6,32 +6,39 @@ import (
 	common_middlewares "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/middlewares"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/api/handlers"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/api/middlewares"
+	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/constants"
 )
 
+var permissionGetter = &middlewares.PermissionGetterImplementation{}
+
 func InitializeRoutes() {
-	http.Handle("/authorization/v1/endpoint/add/", common_middlewares.AuthValidateMiddleware(
-		middlewares.PermissionValidationMiddleware(
+	http.Handle(constants.ADD_NEW_ENDPOINT, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
 			http.HandlerFunc(handlers.RegisterNewAPIEndpoint),
 		),
 	))
-	http.Handle("/authorization/v1/endpoint/all", common_middlewares.AuthValidateMiddleware(
-		middlewares.PermissionValidationMiddleware(
+	http.Handle(constants.GET_ALL_ENDPOINT, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
 			http.HandlerFunc(handlers.GetAllEndpoints),
 		),
 	))
-	http.Handle("/authorization/v1/permission/add/", common_middlewares.AuthValidateMiddleware(
-		middlewares.PermissionValidationMiddleware(
+	http.Handle(constants.ADD_NEW_PERMISSION, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
 			http.HandlerFunc(handlers.RegisterNewPermission),
 		),
 	))
-	http.Handle("/authorization/v1/permission/all", common_middlewares.AuthValidateMiddleware(
-		middlewares.PermissionValidationMiddleware(
+	http.Handle(constants.GET_ALL_PERMISSION, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
 			http.HandlerFunc(handlers.GetAllPermission),
 		),
 	))
-	http.Handle("/authorization/v1/user-permission/set/", common_middlewares.AuthValidateMiddleware(
-		middlewares.PermissionValidationMiddleware(
+	http.Handle(constants.SET_USER_PERMISSION, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
 			http.HandlerFunc(handlers.SetUserPermission),
 		),
 	))
+
+	// Internal APIs
+	// Add some different middleware for validation
+	http.HandleFunc(constants.GET_USER_PERMISSIONS_INTERTAL, handlers.GetUserPermissionEndpoints)
 }

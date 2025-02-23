@@ -3,17 +3,33 @@ package routes
 import (
 	"net/http"
 
-	middlewares "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/middlewares"
+	common_middlewares "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/middlewares"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/api/handlers"
+	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/api/middlewares"
+	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/constants"
 )
 
+var permissionGetter = &middlewares.PermissionGetterImplementation{}
+
 func InitializeRoutes() {
-	http.HandleFunc("/auth/v1/register/", handlers.RegisterNewUser)
-	http.HandleFunc("/auth/v1/login/", handlers.Login)
+	http.HandleFunc(constants.REGISTER, handlers.RegisterNewUser)
+	http.HandleFunc(constants.LOGIN, handlers.Login)
 
 	// Require authentication for the following endpoints
-	http.Handle("/auth/v1/userinfo", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.UserDetail)))
-	http.Handle("/auth/v1/logout/", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.Logout)))
-	http.Handle("/auth/v1/update/userinfo/", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.UpdateUserInfo)))
-	http.Handle("/auth/v1/account/delete/", middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.DeleteUser)))
+	http.Handle(constants.GET_USER_INFO, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
+			http.HandlerFunc(handlers.UserDetail),
+		),
+	))
+	http.Handle(constants.GET_USER_INFO, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
+			http.HandlerFunc(handlers.UpdateUserInfo),
+		),
+	))
+	http.Handle(constants.GET_USER_INFO, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
+			http.HandlerFunc(handlers.DeleteUser),
+		),
+	))
+	http.Handle(constants.LOGOUT, common_middlewares.AuthValidateMiddleware(http.HandlerFunc(handlers.Logout)))
 }

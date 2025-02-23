@@ -39,7 +39,7 @@ func RegisterNewUser(w http.ResponseWriter, r *http.Request) {
 	// Create new user
 	if user.CreateNewUser() != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(common_models.FielValidationErrorResponse{Message: "Account does not created, contact to website admin."})
+		json.NewEncoder(w).Encode(common_models.FieldValidationErrorResponse{Message: "Account does not created, contact to website admin."})
 		return
 	}
 
