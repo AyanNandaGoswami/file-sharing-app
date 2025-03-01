@@ -3,169 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"regexp"
+	"strings"
 
 	common_models "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/models"
-
-	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/api/middlewares"
+	auth "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/utilities"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authorization/internal/models"
 )
-
-func RegisterNewAPIEndpoint(w http.ResponseWriter, r *http.Request) {
-	// Check if request method is POST
-	if r.Method != "POST" {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Set the content type to json
-	w.Header().Set("Content-Type", "application/json")
-
-	var api_endpoints models.APIEndpoints
-	json.NewDecoder(r.Body).Decode(&api_endpoints)
-
-	if validatonErr := api_endpoints.ValidateAPIEndpointsRegistrationPayload(); validatonErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(validatonErr)
-		return
-	}
-
-	if err := api_endpoints.RegisterNewAPIEndpoint(); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Successfully added the endpoint."})
-
-}
-
-func GetAllEndpoints(w http.ResponseWriter, r *http.Request) {
-	// Check if request method is POST
-	if r.Method != "GET" {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Set the content type to json
-	w.Header().Set("Content-Type", "application/json")
-
-	endpoinds, err := models.AllAPIEndpoints()
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(endpoinds)
-}
-
-func RegisterNewPermission(w http.ResponseWriter, r *http.Request) {
-	// Check if request method is POST
-	if r.Method != "POST" {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Set the content type to json
-	w.Header().Set("Content-Type", "application/json")
-
-	var permission models.Permission
-
-	json.NewDecoder(r.Body).Decode(&permission)
-
-	if validationErr := permission.ValidatePermissionRegistrationPayload(); validationErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(validationErr)
-		return
-	}
-
-	err := permission.CreatePermission()
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Successfully added new permission."})
-
-}
-
-func GetAllPermission(w http.ResponseWriter, r *http.Request) {
-	// Check if request method is POST
-	if r.Method != "GET" {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Set the content type to json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Extract the isActive from the query parameters
-	isActive := r.URL.Query().Get("isActive")
-	var isActiveAck *bool
-
-	if isActive != "" {
-		pattern := `^[0-1]$`
-		matched, err := regexp.MatchString(pattern, isActive)
-		if err != nil || !matched {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(common_models.APIResponse{Message: "isActive value is invalid."})
-			return
-		}
-
-		isActiveBool := false
-
-		if isActive == "1" {
-			isActiveBool = true
-		}
-		isActiveAck = &isActiveBool
-	}
-
-	permissions, err := models.AllPermissions(isActiveAck)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(permissions)
-}
-
-func SetUserPermission(w http.ResponseWriter, r *http.Request) {
-	// Check if request method is POST
-	if r.Method != "POST" {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Set the content type to json
-	w.Header().Set("Content-Type", "application/json")
-
-	var userPermission models.UserPermission
-
-	json.NewDecoder(r.Body).Decode(&userPermission)
-
-	if validationErrors := userPermission.ValidateUserPermissionRegistrationPayload(); validationErrors != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(validationErrors)
-		return
-	}
-
-	err := userPermission.SetPermission()
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error()})
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "User permission has been updated successfully."})
-}
 
 func GetUserPermissionEndpoints(w http.ResponseWriter, r *http.Request) {
 	// Check if the request method is POST
@@ -186,8 +29,7 @@ func GetUserPermissionEndpoints(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the method to get user permissions
-	var permissionGetter middlewares.PermissionGetterImplementation
-	apiEndpoints, err := permissionGetter.GetUserPermissionEndpoints(requestData.PrimitiveUserId)
+	apiEndpoints, err := models.GetUserPermissions(requestData.PrimitiveUserId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error(), ExtraData: nil})
@@ -196,4 +38,67 @@ func GetUserPermissionEndpoints(w http.ResponseWriter, r *http.Request) {
 
 	// Send the response with the permission data
 	json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Ok", ExtraData: apiEndpoints})
+}
+
+func ValidateAuthorization(w http.ResponseWriter, r *http.Request) {
+	// Check if the request method is POST
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the content type to JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	var permissionValidationPayload models.PermissionValidation
+	var primitiveUserId string
+	json.NewDecoder(r.Body).Decode(&permissionValidationPayload)
+
+	if validationErrors := permissionValidationPayload.ValidatePermissionValidadtionPayload(); validationErrors != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(validationErrors)
+		return
+	}
+
+	// if validate_by token then fetch the PrimitiveUserId from the token
+	if permissionValidationPayload.ValidateBy == "token" {
+		info, err := auth.RetrieveDetilsFromJWT(permissionValidationPayload.Token)
+		if err != nil {
+			// Split the error message by ":"
+			errorMessageParts := strings.Split(err.Error(), ":")
+
+			w.WriteHeader(http.StatusUnauthorized)
+			// Send the error message without ":"
+			json.NewEncoder(w).Encode(common_models.APIResponse{
+				Message:   errorMessageParts[len(errorMessageParts)-1],
+				ExtraData: map[string]bool{"authorized": false}})
+			return
+		}
+		primitiveUserId = info.PrimitiveUserId
+	} else {
+		primitiveUserId = permissionValidationPayload.PrimitiveUserId
+	}
+
+	// Call the method to get user permissions
+	apiEndpoints, err := models.GetUserPermissions(primitiveUserId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(common_models.APIResponse{Message: err.Error(), ExtraData: nil})
+		return
+	}
+
+	// check requested url is exists or not in the apiEndpoints with the same method
+	method, exists := apiEndpoints[permissionValidationPayload.RequestedUrl]
+	if exists {
+		if method == permissionValidationPayload.RequestedMethod {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Success", ExtraData: map[string]bool{"authorized": true}})
+			return
+		}
+	}
+	w.WriteHeader(http.StatusForbidden)
+	json.NewEncoder(w).Encode(common_models.APIResponse{
+		Message:   "You don't have permission to perform this action.",
+		ExtraData: map[string]bool{"authorized": false}})
+
 }

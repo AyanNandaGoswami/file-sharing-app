@@ -3,7 +3,7 @@ module github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication
 go 1.24.0
 
 require (
-	github.com/AyanNandaGoswami/file-sharing-app-common-utilities v0.0.3
+	github.com/AyanNandaGoswami/file-sharing-app-common-utilities v0.0.4
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/google/uuid v1.6.0
 	go.mongodb.org/mongo-driver v1.14.0

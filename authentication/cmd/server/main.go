@@ -12,7 +12,7 @@ func main() {
 	routes.InitializeRoutes()
 
 	// Start HTTP server on port 4001
-	fmt.Println("Server is listening on port 4001...")
+	fmt.Println("Authenticaton service is listening on port 4001...")
 
 	// ListenAndServe starts an HTTP server with a given address and handler.
 	// If the address is blank, ":http" is used (i.e., "localhost:8080").

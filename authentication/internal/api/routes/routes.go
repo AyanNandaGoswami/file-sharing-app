@@ -5,11 +5,8 @@ import (
 
 	common_middlewares "github.com/AyanNandaGoswami/file-sharing-app-common-utilities/v1/middlewares"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/api/handlers"
-	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/api/middlewares"
 	"github.com/AyanNandaGoswami/microservices/file-sharing-app/authentication/internal/constants"
 )
-
-var permissionGetter = &middlewares.PermissionGetterImplementation{}
 
 func InitializeRoutes() {
 	http.HandleFunc(constants.REGISTER, handlers.RegisterNewUser)
@@ -17,17 +14,17 @@ func InitializeRoutes() {
 
 	// Require authentication for the following endpoints
 	http.Handle(constants.GET_USER_INFO, common_middlewares.AuthValidateMiddleware(
-		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
+		common_middlewares.PermissionValidationMiddleware(
 			http.HandlerFunc(handlers.UserDetail),
 		),
 	))
-	http.Handle(constants.GET_USER_INFO, common_middlewares.AuthValidateMiddleware(
-		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
+	http.Handle(constants.UPDATE_USER_INFO, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(
 			http.HandlerFunc(handlers.UpdateUserInfo),
 		),
 	))
-	http.Handle(constants.GET_USER_INFO, common_middlewares.AuthValidateMiddleware(
-		common_middlewares.PermissionValidationMiddleware(permissionGetter)(
+	http.Handle(constants.DELETE_USER_ACCOUNT, common_middlewares.AuthValidateMiddleware(
+		common_middlewares.PermissionValidationMiddleware(
 			http.HandlerFunc(handlers.DeleteUser),
 		),
 	))
