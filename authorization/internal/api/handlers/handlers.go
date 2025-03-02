@@ -52,6 +52,7 @@ func ValidateAuthorization(w http.ResponseWriter, r *http.Request) {
 
 	var permissionValidationPayload models.PermissionValidation
 	var primitiveUserId string
+	var userUUID string
 	json.NewDecoder(r.Body).Decode(&permissionValidationPayload)
 
 	if validationErrors := permissionValidationPayload.ValidatePermissionValidadtionPayload(); validationErrors != nil {
@@ -75,6 +76,7 @@ func ValidateAuthorization(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		primitiveUserId = info.PrimitiveUserId
+		userUUID = info.UserId
 	} else {
 		primitiveUserId = permissionValidationPayload.PrimitiveUserId
 	}
@@ -92,6 +94,10 @@ func ValidateAuthorization(w http.ResponseWriter, r *http.Request) {
 	if exists {
 		if method == permissionValidationPayload.RequestedMethod {
 			w.WriteHeader(http.StatusOK)
+			if permissionValidationPayload.ReturnUserId {
+				json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Success", ExtraData: map[string]any{"authorized": true, "userId": userUUID}})
+				return
+			}
 			json.NewEncoder(w).Encode(common_models.APIResponse{Message: "Success", ExtraData: map[string]bool{"authorized": true}})
 			return
 		}

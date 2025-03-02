@@ -16,6 +16,7 @@ type PermissionValidation struct {
 	ValidateBy      string `json:"validate_by" validate:"required=This field is required,oneof=token primitiveUserId"`
 	RequestedUrl    string `json:"requestedUrl" validate:"required=This field is required."`
 	RequestedMethod string `json:"requestedMethod" validate:"required=This field is required."`
+	ReturnUserId    bool   `json:"returnUserId"`
 }
 
 func (up *GetUserPermissionsRequest) ValidateGetUserPermissionsRequestRegistrationPayload() []common_models.FieldValidationErrorResponse {
